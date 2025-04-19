@@ -44,15 +44,19 @@ internal object InstallCommand : Runnable {
                 }.install(Installer.Apk(apk, packageName))
             } catch (e: Exception) {
                 logger.severe(e.toString())
+                return
             }
 
             when (result) {
+                RootInstallerResult.SUCCESS ->
+                    logger.info("Mounted the APK file")
                 RootInstallerResult.FAILURE ->
                     logger.severe("Failed to mount the APK file")
+                AdbInstallerResult.Success ->
+                    logger.info("Installed the APK file")
                 is AdbInstallerResult.Failure ->
                     logger.severe(result.exception.toString())
-                else ->
-                    logger.info("Installed the APK file")
+                else -> logger.severe("Unknown installation result")
             }
         }
 

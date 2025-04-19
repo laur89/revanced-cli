@@ -48,14 +48,19 @@ internal object UninstallCommand : Runnable {
                 }.uninstall(packageName)
             } catch (e: Exception) {
                 logger.severe(e.toString())
+                return
             }
 
             when (result) {
+                RootInstallerResult.SUCCESS ->
+                    logger.info("Unmounted the patched APK file")
                 RootInstallerResult.FAILURE ->
                     logger.severe("Failed to unmount the patched APK file")
+                AdbInstallerResult.Success ->
+                    logger.info("Uninstalled the patched APK file")
                 is AdbInstallerResult.Failure ->
                     logger.severe(result.exception.toString())
-                else -> logger.info("Uninstalled the patched APK file")
+                else -> logger.severe("Unknown uninstallation result")
             }
         }
 
