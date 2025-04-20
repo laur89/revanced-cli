@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import picocli.CommandLine.*
 import picocli.CommandLine.Help.Visibility.ALWAYS
 import java.util.logging.Logger
+import kotlin.system.exitProcess
 
 @Command(
     name = "uninstall",
@@ -48,24 +49,35 @@ internal object UninstallCommand : Runnable {
                 }.uninstall(packageName)
             } catch (e: Exception) {
                 logger.severe(e.toString())
-                return
+                throw e
             }
 
             when (result) {
                 RootInstallerResult.SUCCESS ->
                     logger.info("Unmounted the patched APK file")
-                RootInstallerResult.FAILURE ->
+                RootInstallerResult.FAILURE -> {
                     logger.severe("Failed to unmount the patched APK file")
+                    throw Exception()
+                }
                 AdbInstallerResult.Success ->
                     logger.info("Uninstalled the patched APK file")
-                is AdbInstallerResult.Failure ->
+                is AdbInstallerResult.Failure -> {
                     logger.severe(result.exception.toString())
-                else -> logger.severe("Unknown uninstallation result")
+                    throw Exception()
+                }
+                else ->  {
+                    logger.severe("Unknown uninstallation result")
+                    throw Exception()
+                }
             }
         }
 
         runBlocking {
-            deviceSerials?.map { async { uninstall(it) } }?.awaitAll() ?: uninstall()
+            try {
+                deviceSerials?.map { async { uninstall(it) } }?.awaitAll() ?: uninstall()
+            } catch (_: Exception) {
+                exitProcess(1)
+            }
         }
     }
 }
