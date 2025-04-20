@@ -255,7 +255,7 @@ internal object PatchCommand : Runnable {
             val deviceSerial = installation?.deviceSerial!!.ifEmpty { null }
 
             try {
-                if (installation?.mount ?: false) {
+                if (installation?.mount == true) {
                     AdbRootInstaller(deviceSerial)
                 } else {
                     AdbInstaller(deviceSerial)
