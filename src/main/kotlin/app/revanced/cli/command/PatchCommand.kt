@@ -123,7 +123,7 @@ internal object PatchCommand : Runnable {
             names = ["-i", "--install"],
             required = true,
             description = ["Serial of the ADB device to install to. If not specified, the first connected device will be used."],
-            fallbackValue = "",  // Empty string to indicate that the first connected device should be used.
+            fallbackValue = "",  // Empty string is used to select the first of connected devices.
             arity = "0..1",
         )
         internal var deviceSerial: String? = null
