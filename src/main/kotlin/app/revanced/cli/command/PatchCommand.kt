@@ -90,28 +90,6 @@ internal object PatchCommand : Runnable {
         }
     }
 
-    @ArgGroup(exclusive = false, multiplicity = "0..1")
-    internal var install: InstallType? = null
-
-    internal class InstallType {
-        @CommandLine.Option(
-            names = ["-i", "--install"],
-            required = true,
-            description = ["Serial of the ADB device to install to. If not specified, the first connected device will be used."],
-            fallbackValue = "",  // empty string to indicate that the first connected device should be used.
-            arity = "0..1",
-        )
-        internal var deviceSerial: String? = null
-
-        @CommandLine.Option(
-            names = ["--mount"],
-            required = false,
-            description = ["Install the patched APK file by mounting."],
-            showDefaultValue = ALWAYS,
-        )
-        internal var mount: Boolean = false
-    }
-
     @CommandLine.Option(
         names = ["--exclusive"],
         description = ["Disable all patches except the ones enabled."],
@@ -135,6 +113,28 @@ internal object PatchCommand : Runnable {
     @Suppress("unused")
     private fun setOutputFilePath(outputFilePath: File?) {
         this.outputFilePath = outputFilePath?.absoluteFile
+    }
+
+    @ArgGroup(exclusive = false, multiplicity = "0..1")
+    internal var installation: Installation? = null
+
+    internal class Installation {
+        @CommandLine.Option(
+            names = ["-i", "--install"],
+            required = true,
+            description = ["Serial of the ADB device to install to. If not specified, the first connected device will be used."],
+            fallbackValue = "",  // Empty string to indicate that the first connected device should be used.
+            arity = "0..1",
+        )
+        internal var deviceSerial: String? = null
+
+        @CommandLine.Option(
+            names = ["--mount"],
+            required = false,
+            description = ["Install the patched APK file by mounting."],
+            showDefaultValue = ALWAYS,
+        )
+        internal var mount: Boolean = false
     }
 
     @CommandLine.Option(
@@ -251,11 +251,11 @@ internal object PatchCommand : Runnable {
             keyStoreFilePath ?: outputFilePath.parentFile
                 .resolve("${outputFilePath.nameWithoutExtension}.keystore")
 
-        val installer = if (install?.deviceSerial != null) {
-            val deviceSerial = install?.deviceSerial!!.ifEmpty { null }
+        val installer = if (installation?.deviceSerial != null) {
+            val deviceSerial = installation?.deviceSerial!!.ifEmpty { null }
 
             try {
-                if (install?.mount ?: false) {
+                if (installation?.mount ?: false) {
                     AdbRootInstaller(deviceSerial)
                 } else {
                     AdbInstaller(deviceSerial)
@@ -338,7 +338,7 @@ internal object PatchCommand : Runnable {
         apk.copyTo(temporaryFilesPath.resolve(apk.name), overwrite = true).apply {
             patcherResult.applyTo(this)
         }.let { patchedApkFile ->
-            if (!(install?.mount ?: false)) {
+            if (installation?.mount != true) {
                 ApkUtils.signApk(
                     patchedApkFile,
                     outputFilePath,
@@ -361,7 +361,7 @@ internal object PatchCommand : Runnable {
 
         // region Install.
 
-        install?.deviceSerial?.let {
+        installation?.deviceSerial?.let {
             runBlocking {
                 when (val result = installer!!.install(Installer.Apk(outputFilePath, packageName))) {
                     RootInstallerResult.FAILURE -> logger.severe("Failed to mount the patched APK file")
