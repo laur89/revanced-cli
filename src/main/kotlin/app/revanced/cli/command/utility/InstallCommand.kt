@@ -31,7 +31,7 @@ internal object InstallCommand : Runnable {
 
     @Option(
         names = ["-m", "--mount"],
-        description = ["Mount the supplied APK file over the app with the given package name."],
+        description = ["Mount the supplied APK file over the app with the supplied package name."],
     )
     private var packageName: String? = null
 
@@ -58,7 +58,7 @@ internal object InstallCommand : Runnable {
                 AdbInstallerResult.Success ->
                     logger.info("Installed the APK file")
                 is AdbInstallerResult.Failure -> {
-                    logger.severe(result.exception.toString())
+                    logger.severe("Failed to install the APK file: ${result.exception}")
                     throw Exception()
                 }
                 else -> {
